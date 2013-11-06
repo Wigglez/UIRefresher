@@ -16,6 +16,7 @@ namespace UIRefresher {
         // ===========================================================
 
         public static bool InitHasRun;
+        public static bool FirstPass;
 
         public static string UIRStatusText;
 
@@ -51,6 +52,8 @@ namespace UIRefresher {
         public void Init() {
             InitHasRun = true;
 
+            FirstPass = false;
+
             UIRStatusText = "{TimerName}: {TimeRemaining} ({TimeDuration})";
 
             for(var i = 0; i < ThrottleTimer.ThrottleTimerCount; i++) {
@@ -82,11 +85,17 @@ namespace UIRefresher {
 
         public static void RefreshLogic() {
             if(!ThrottleTimer.TimerStopwatch.IsRunning) {
-                // Reload the ui
-                Lua.DoString("ReloadUI()");
+                if (FirstPass)
+                {
+                    // Reload the ui
+                    Lua.DoString("ReloadUI()");
+                }
+                
 
                 ThrottleTimer.WaitTimerCreated = false;
             }
+
+            FirstPass = true;
 
             RefreshTimer();
         }
