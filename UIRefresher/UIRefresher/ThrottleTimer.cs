@@ -1,5 +1,4 @@
-﻿/* BotBase created by AknA and Wigglez */
-
+﻿
 #region Namespaces
 
 using System;
@@ -12,8 +11,8 @@ using Styx.CommonBot;
 
 #endregion
 
-namespace UIRefresher.Helpers {
-    public class ThrottleTimer : UIRefresher {
+namespace UIRefresher {
+    public class ThrottleTimer {
         // ===========================================================
         // Constants
         // ===========================================================
@@ -65,6 +64,10 @@ namespace UIRefresher.Helpers {
         public static void CreateThrottleTimer(Stopwatch pTimer, int pTime, string pTimerStringName) {
             TimerStringName = pTimerStringName;
 
+            foreach(var t in UIRefresher.ThrottleTimers.Where(t => t.TimerName == TimerStringName)) {
+                t.Time = pTime;
+            }
+
             // Check a throttle timer using our currently received timer and the random number
             CheckThrottleTimer(pTimer, pTime, TimerStringName);
         }
@@ -96,14 +99,6 @@ namespace UIRefresher.Helpers {
             }
         }
 
-        public static void Refresh() {
-            if(!TimerStopwatch.IsRunning) {
-                CreateThrottleTimer(TimerStopwatch, 1800000, RefreshUITimerString);
-            } else {
-                CheckThrottleTimer(TimerStopwatch, ThrottleTimers[0].Time, RefreshUITimerString);
-            }
-        }
-
         // ===========================================================
         // Inner and Anonymous Classes
         // ===========================================================
@@ -111,7 +106,7 @@ namespace UIRefresher.Helpers {
         private static void FormatAndShowTimer(string pTimerStringName) {
             // Create a new timer if last one has expired or we didn't have one
             if(!WaitTimerCreated) {
-                foreach(var t in ThrottleTimers.Where(t => t.TimerName == pTimerStringName)) {
+                foreach(var t in UIRefresher.ThrottleTimers.Where(t => t.TimerName == pTimerStringName)) {
                     WaitTimerCreated = true;
 
                     // Set up a new timer based on the amount of milliseconds in our current timer
@@ -155,7 +150,7 @@ namespace UIRefresher.Helpers {
 
         private static void OutputMessage(string pTimerStringName) {
             // Timername: 1m:15s (5m:2s)
-            TreeRoot.GoalText = (String.IsNullOrEmpty(UIRStatusText) ? "" : SubstituteInMessage(pTimerStringName, UIRStatusText));
+            TreeRoot.GoalText = (String.IsNullOrEmpty(UIRefresher.UIRStatusText) ? "" : SubstituteInMessage(pTimerStringName, UIRefresher.UIRStatusText));
             TreeRoot.StatusText = TreeRoot.GoalText;
         }
     }

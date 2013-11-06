@@ -46,9 +46,8 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Helpers\Character.cs" />
-    <Compile Include="Helpers\ThrottleTimer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="ThrottleTimer.cs" />
     <Compile Include="UIRefresher.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

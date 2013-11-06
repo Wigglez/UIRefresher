@@ -1,16 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.Remoting.Messaging;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Media;
 using Styx.Common;
 using Styx.CommonBot;
 using Styx.Plugins;
-using Styx.TreeSharp;
 using Styx.WoWInternals;
-using UIRefresher.Helpers;
 
 namespace UIRefresher {
     public class UIRefresher : HBPlugin {
@@ -22,12 +15,20 @@ namespace UIRefresher {
         // Fields
         // ===========================================================
 
+        public static bool InitHasRun;
+
         public static string UIRStatusText;
 
         public static ThrottleTimer[] ThrottleTimers = new ThrottleTimer[ThrottleTimer.ThrottleTimerCount];
 
 
+        // ===========================================================
+        // Getter & Setter
+        // ===========================================================
 
+        // ===========================================================
+        // Methods for/from SuperClass/Interfaces
+        // ===========================================================
 
         public override string Author {
             get { return "AknA and Wigglez"; }
@@ -38,22 +39,18 @@ namespace UIRefresher {
         }
 
         public override void Pulse() {
+            if(!InitHasRun) {
+                Init();
+            }
 
+            RefreshLogic();
         }
 
         public override Version Version { get { return new Version(1, 0, 0); } }
 
-        public override void Initialize() {
-            base.Initialize();
-            BotEvents.OnBotStarted += BotEvent_OnBotStarted;
-            BotEvents.OnBotStopped += BotEvent_OnBotStopped;
-        }
+        public void Init() {
+            InitHasRun = true;
 
-        private static void BotEvent_OnBotStopped(EventArgs args) {
-
-        }
-
-        private static void BotEvent_OnBotStarted(EventArgs args) {
             UIRStatusText = "{TimerName}: {TimeRemaining} ({TimeDuration})";
 
             for(var i = 0; i < ThrottleTimer.ThrottleTimerCount; i++) {
@@ -62,24 +59,60 @@ namespace UIRefresher {
 
             ThrottleTimers[0].TimerName = ThrottleTimer.RefreshUITimerString;
 
+            BotEvents.OnBotStopped += BotEvent_OnBotStopped;
+
             UIRLog("Initialization complete.");
         }
 
-        public void Shutdown() {
-
-        }
+        // ===========================================================
+        // Methods
+        // ===========================================================
 
         public static void UIRLog(string message, params object[] args) {
             Logging.Write(Colors.DeepSkyBlue, "[UIR]: " + message, args);
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
+        public static void RefreshTimer() {
+            if(!ThrottleTimer.TimerStopwatch.IsRunning) {
+                ThrottleTimer.CreateThrottleTimer(ThrottleTimer.TimerStopwatch, 1800000, ThrottleTimer.RefreshUITimerString);
+            } else {
+                ThrottleTimer.CheckThrottleTimer(ThrottleTimer.TimerStopwatch, ThrottleTimers[0].Time, ThrottleTimer.RefreshUITimerString);
+            }
+        }
+
         public static void RefreshLogic() {
+            if(!ThrottleTimer.TimerStopwatch.IsRunning) {
+                // Reload the ui
+                Lua.DoString("ReloadUI()");
+
+                ThrottleTimer.WaitTimerCreated = false;
+            }
+
+            RefreshTimer();
+        }
+
+        // ===========================================================
+        // Inner and Anonymous Classes
+        // ===========================================================
 
 
-            Lua.DoString("ReloadUI()");
+        private static void BotEvent_OnBotStopped(EventArgs args)
+        {
+            InitHasRun = false;
+
+            BotEvents.OnBotStopped -= BotEvent_OnBotStopped;
+
+
+            TreeRoot.GoalText = string.Empty;
+            TreeRoot.StatusText = string.Empty;
+
+            // Clear the throttle timers
+            foreach(var t in ThrottleTimers) {
+                t.TimerName = "";
+                t.Time = 0;
+            }
+
+            UIRLog("Shutdown complete.");
         }
     }
 }
